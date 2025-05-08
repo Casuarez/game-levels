@@ -1,281 +1,160 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Camino a tu Corazón 💖</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        height: 100%;
-        overflow: hidden;
-        background: linear-gradient(to top, #ffe6f0, #ffffff);
-        font-family: sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      #gameCanvas {
-        width: 90vw;
-        height: 90vh;
-        background: #fce4ec;
-        border: 3px solid #ff69b4;
-        border-radius: 10px;
-        touch-action: none;
-      }
-      #message {
-        display: none;
-        text-align: center;
-        padding: 20px;
-        font-size: 1.2rem;
-        color: #c2185b;
-      }
-      #restartBtn {
-        margin-top: 15px;
-        padding: 10px 20px;
-        border: none;
-        background: #ff69b4;
-        color: white;
-        font-size: 1rem;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      @keyframes beat {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.2);
-        }
-      }
-      .heart-animated {
-        animation: beat 0.8s infinite;
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="message">
-      <h2>¡Llegaste a mi corazón! 💖</h2>
-      <p>
-        Feliz 16 meses, mi amor 💕. Gracias por recorrer este camino conmigo 🌈.
-        Estoy tan emocionado de que ya pronto seremos 3 👶. Eres una mujer
-        increíble 💫 y yo soy tan afortunado de tenerte a mi lado 🫶 mi niñita
-        hermosa 👧. Te amo siempre ❤️.
-      </p>
-      <p>
-        <small>Contador: <span id="daysTogether"></span> días juntos</small>
-      </p>
-      <button id="restartBtn">Volver a jugar</button>
-    </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camino a tu Corazón 💖</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; background: linear-gradient(to top, #ffe6f0, #ffffff); font-family: sans-serif; display: flex; justify-content: center; align-items: center; }
+    #gameCanvas { width: 90vw; height: 90vh; background: #fce4ec; border: 3px solid #ff69b4; border-radius: 10px; touch-action: none; }
+    #message { display: none; text-align: center; padding: 20px; font-size: 1.2rem; color: #c2185b; }
+    #restartBtn { margin-top: 15px; padding: 10px 20px; border: none; background: #ff69b4; color: white; font-size: 1rem; border-radius: 8px; cursor: pointer; }
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    .heart-animated {
+      animation: beat 0.8s infinite;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="message">
+    <h2>¡Llegaste a mi corazón! 💖</h2>
+    <p>Feliz 14 meses, mi amor 💕. Gracias por recorrer este camino conmigo 🌈. Estoy tan emocionado de que ya pronto seremos 3 👶. Eres una mujer increíble 💫 y yo soy tan afortunado de tenerte a mi lado 🫶 mi niñita hermosa 👧. Te amo siempre ❤️.</p>
+    <p><small>Contador: <span id="daysTogether"></span> días juntos</small></p>
+    <button id="restartBtn">Volver a jugar</button>
+  </div>
 
-    <audio id="bgMusic" loop autoplay>
-      <source
-        src="https://cdn.pixabay.com/audio/2022/03/15/audio_1c6ba4db94.mp3"
-        type="audio/mpeg"
-      />
-    </audio>
+  <audio id="bgMusic" loop autoplay>
+    <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_1c6ba4db94.mp3" type="audio/mpeg">
+  </audio>
 
-    <script>
-      const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d");
-      const restartBtn = document.getElementById("restartBtn");
-      const messageDiv = document.getElementById("message");
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const restartBtn = document.getElementById('restartBtn');
+    const messageDiv = document.getElementById('message');
 
-      function resizeCanvas() {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-      }
-      window.addEventListener("resize", () => {
-        resizeCanvas();
-        resetGame();
-      });
+    function resizeCanvas() {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    }
+    window.addEventListener('resize', () => {
       resizeCanvas();
-
-      let player, platforms, goal;
-      const gravity = 0.8;
-      const jumpPower = -12;
-      const moveSpeed = 3;
-      let keys = {};
-      let touching = false;
-
-      function resetGame() {
-        player = {
-          x: 50,
-          y: canvas.height - 80,
-          width: 20,
-          height: 20,
-          dx: 0,
-          dy: 0,
-          onGround: false,
-        };
-        platforms = [
-          { x: 0, y: canvas.height - 30, width: canvas.width, height: 30 },
-          {
-            x: canvas.width * 0.3,
-            y: canvas.height - 100,
-            width: 60,
-            height: 10,
-          },
-          {
-            x: canvas.width * 0.62,
-            y: canvas.height - 170,
-            width: 60,
-            height: 10,
-          },
-          {
-            x: canvas.width * 0.2,
-            y: canvas.height - 240,
-            width: 60,
-            height: 10,
-          },
-          {
-            x: canvas.width * 0.4,
-            y: canvas.height - 310,
-            width: 60,
-            height: 10,
-          },
-          {
-            x: canvas.width * 0.25,
-            y: canvas.height - 380,
-            width: 60,
-            height: 10,
-          },
-          {
-            x: canvas.width * 0.55,
-            y: canvas.height - 450,
-            width: 60,
-            height: 10,
-          },
-          {
-            x: canvas.width * 0.35,
-            y: canvas.height - 520,
-            width: 60,
-            height: 10,
-          },
-        ];
-        goal = {
-          x: canvas.width / 2 - 24,
-          y: canvas.height - 580,
-          width: 48,
-          height: 48,
-        };
-        messageDiv.style.display = "none";
-        canvas.style.display = "block";
-      }
-
-      window.addEventListener("keydown", (e) => (keys[e.key] = true));
-      window.addEventListener("keyup", (e) => (keys[e.key] = false));
-
-      canvas.addEventListener("touchstart", (e) => {
-        touching = true;
-        const x = e.touches[0].clientX;
-        if (x < canvas.width / 2) player.dx = -moveSpeed;
-        else player.dx = moveSpeed;
-
-        if (player.onGround) {
-          player.dy = jumpPower;
-          player.onGround = false;
-        }
-      });
-
-      canvas.addEventListener("touchend", () => {
-        player.dx = 0;
-        touching = false;
-      });
-
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#ff4081";
-        ctx.fillRect(player.x, player.y, player.width, player.height);
-
-        ctx.fillStyle = "#f8bbd0";
-        platforms.forEach((p) => ctx.fillRect(p.x, p.y, p.width, p.height));
-
-        ctx.fillStyle = "#e91e63";
-        ctx.beginPath();
-        ctx.moveTo(goal.x + 24, goal.y + 36);
-        ctx.bezierCurveTo(
-          goal.x,
-          goal.y + 15,
-          goal.x,
-          goal.y,
-          goal.x + 24,
-          goal.y
-        );
-        ctx.bezierCurveTo(
-          goal.x + 48,
-          goal.y,
-          goal.x + 48,
-          goal.y + 15,
-          goal.x + 24,
-          goal.y + 36
-        );
-        ctx.fill();
-      }
-
-      function update() {
-        if (keys["ArrowLeft"]) player.dx = -moveSpeed;
-        else if (keys["ArrowRight"]) player.dx = moveSpeed;
-        else if (!touching) player.dx = 0;
-
-        player.x += player.dx;
-        player.dy += gravity;
-        player.y += player.dy;
-
-        if (player.x < 0) player.x = 0;
-        if (player.x + player.width > canvas.width)
-          player.x = canvas.width - player.width;
-
-        player.onGround = false;
-        for (let p of platforms) {
-          if (
-            player.y + player.height > p.y &&
-            player.y < p.y + p.height &&
-            player.x + player.width > p.x &&
-            player.x < p.x + p.width
-          ) {
-            player.y = p.y - player.height;
-            player.dy = 0;
-            player.onGround = true;
-          }
-        }
-
-        if (
-          player.x < goal.x + goal.width &&
-          player.x + player.width > goal.x &&
-          player.y < goal.y + goal.height &&
-          player.y + player.height > goal.y
-        ) {
-          canvas.style.display = "none";
-          messageDiv.style.display = "block";
-          updateDaysTogether();
-        }
-      }
-
-      function loop() {
-        update();
-        draw();
-        requestAnimationFrame(loop);
-      }
-
-      function updateDaysTogether() {
-        const startDate = new Date("2024-01-06");
-        const today = new Date();
-        const diff =
-          Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
-        document.getElementById("daysTogether").textContent = diff;
-      }
-
-      restartBtn.addEventListener("click", resetGame);
       resetGame();
-      loop();
-    </script>
-  </body>
+    });
+    resizeCanvas();
+
+    let player, platforms, goal;
+    const gravity = 0.8;
+    const jumpPower = -12;
+    const moveSpeed = 3;
+    let keys = {};
+    let touching = false;
+
+    function resetGame() {
+      player = { x: 50, y: canvas.height - 80, width: 20, height: 20, dx: 0, dy: 0, onGround: false };
+      platforms = [
+        { x: 0, y: canvas.height - 30, width: canvas.width, height: 30 },
+        { x: canvas.width * 0.3, y: canvas.height - 100, width: 60, height: 10 },
+        { x: canvas.width * 0.58, y: canvas.height - 170, width: 60, height: 10 },
+        { x: canvas.width * 0.2, y: canvas.height - 240, width: 60, height: 10 },
+        { x: canvas.width * 0.4, y: canvas.height - 310, width: 60, height: 10 },
+        { x: canvas.width * 0.25, y: canvas.height - 380, width: 60, height: 10 },
+        { x: canvas.width * 0.55, y: canvas.height - 450, width: 60, height: 10 },
+        { x: canvas.width * 0.35, y: canvas.height - 520, width: 60, height: 10 }
+      ];
+      goal = { x: canvas.width / 2 - 24, y: canvas.height - 580, width: 48, height: 48 };
+      messageDiv.style.display = 'none';
+      canvas.style.display = 'block';
+    }
+
+    window.addEventListener('keydown', e => keys[e.key] = true);
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    canvas.addEventListener('touchstart', (e) => {
+      touching = true;
+      const x = e.touches[0].clientX;
+      if (x < canvas.width / 2) player.dx = -moveSpeed;
+      else player.dx = moveSpeed;
+
+      if (player.onGround) {
+        player.dy = jumpPower;
+        player.onGround = false;
+      }
+    });
+
+    canvas.addEventListener('touchend', () => {
+      player.dx = 0;
+      touching = false;
+    });
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ff4081';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      ctx.fillStyle = '#f8bbd0';
+      platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+
+      ctx.fillStyle = '#e91e63';
+      ctx.beginPath();
+      ctx.moveTo(goal.x + 24, goal.y + 36);
+      ctx.bezierCurveTo(goal.x, goal.y + 15, goal.x, goal.y, goal.x + 24, goal.y);
+      ctx.bezierCurveTo(goal.x + 48, goal.y, goal.x + 48, goal.y + 15, goal.x + 24, goal.y + 36);
+      ctx.fill();
+    }
+
+    function update() {
+      if (keys['ArrowLeft']) player.dx = -moveSpeed;
+      else if (keys['ArrowRight']) player.dx = moveSpeed;
+      else if (!touching) player.dx = 0;
+
+      player.x += player.dx;
+      player.dy += gravity;
+      player.y += player.dy;
+
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+      player.onGround = false;
+      for (let p of platforms) {
+        if (player.y + player.height > p.y && player.y < p.y + p.height &&
+            player.x + player.width > p.x && player.x < p.x + p.width) {
+          player.y = p.y - player.height;
+          player.dy = 0;
+          player.onGround = true;
+        }
+      }
+
+      if (player.x < goal.x + goal.width && player.x + player.width > goal.x &&
+          player.y < goal.y + goal.height && player.y + player.height > goal.y) {
+        canvas.style.display = 'none';
+        messageDiv.style.display = 'block';
+        updateDaysTogether();
+      }
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function updateDaysTogether() {
+      const startDate = new Date('2024-01-06');
+      const today = new Date();
+      const diff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+      document.getElementById('daysTogether').textContent = diff;
+    }
+
+    restartBtn.addEventListener('click', resetGame);
+    resetGame();
+    loop();
+  </script>
+</body>
+</html>
